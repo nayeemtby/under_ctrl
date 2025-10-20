@@ -1,3 +1,15 @@
+console.log("content.js started");
+
+// Run and keep watching for dynamic content using a MutationObserver.
+// Debounce to avoid running too often when many nodes are added at once.
+const debounce = (fn, wait = 120) => {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), wait);
+  };
+};
+
 const accessibilityText = "Feed posts";
 
 let definedFeedHolder = false;
@@ -40,7 +52,7 @@ const findFeedHolder = (lang) => {
   const matchesHeader = (header, expected) => {
     if (!header || !expected) return false;
     const text = header.innerText;
-    console.log("matchesHeader: header innerText:", text);
+    // console.log("matchesHeader: header innerText:", text);
     return text.toLowerCase() === expected.toLowerCase();
   };
 
@@ -111,6 +123,16 @@ const findFeedHolder = (lang) => {
 };
 
 const limitFeedSize = () => {
+  // Return early if current route is not the root ("/")
+  if (
+    typeof window !== "undefined" &&
+    window.location &&
+    window.location.pathname !== "/"
+  ) {
+    console.log("Not root route, skipping limitFeedSize");
+    definedFeedHolder = false;
+    return;
+  }
   const feedHolder = findFeedHolder("");
   if (!feedHolder) return;
 
@@ -149,6 +171,15 @@ const limitFeedSize = () => {
 };
 
 const hideReels = () => {
+  // Return early if current route is not the root ("/")
+  if (
+    typeof window !== "undefined" &&
+    window.location &&
+    window.location.pathname !== "/"
+  ) {
+    console.log("Not root route, skipping hideReels");
+    return;
+  }
   const elms = document.querySelectorAll(
     "[href*='/reel/'][aria-label='reel'] "
   );
@@ -173,18 +204,6 @@ const hideReels = () => {
       elm.remove();
     }
   });
-};
-
-console.log("Content script loaded");
-console.log(chrome);
-// Run and keep watching for dynamic content using a MutationObserver.
-// Debounce to avoid running too often when many nodes are added at once.
-const debounce = (fn, wait = 120) => {
-  let t;
-  return (...args) => {
-    clearTimeout(t);
-    t = setTimeout(() => fn(...args), wait);
-  };
 };
 
 const hideReelsDebounced = debounce(() => {
