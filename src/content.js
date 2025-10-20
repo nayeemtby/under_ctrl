@@ -27,8 +27,8 @@ const findFeedHolder = (lang) => {
     );
     if (newsFeedHolder.length > 0) {
       const exisintgHolder = newsFeedHolder[0];
-      console.log("Returning existing defined-feed-holder:");
-      console.log(exisintgHolder);
+      console.log("Returning existing defined-feed-holder");
+      // console.log(exisintgHolder);
       return exisintgHolder;
     }
     definedFeedHolder = false;
@@ -206,6 +206,51 @@ const hideReels = () => {
   });
 };
 
+const hideVideoRecommendations = () => {
+  if (typeof window === "undefined" || typeof window.location === "undefined") {
+    return;
+  }
+  const path = window.location.pathname || "";
+  const search = window.location.search || "";
+  const onWatchRoute =
+    (path === "/watch" || path === "/watch/") && /[?&]v=/.test(search);
+  if (!onWatchRoute) {
+    console.log("Not a /watch?v=... route, skipping hideVideoRecommendations");
+    return;
+  }
+
+  // find logic
+  const grandParentContainer = document.getElementById("watch_feed");
+  if (!grandParentContainer) {
+    console.log("No watch_feed container found");
+    return;
+  }
+
+  const uselessParent = grandParentContainer.firstChild;
+  if (!uselessParent || !(uselessParent instanceof Element)) {
+    console.log("No uselessParent found inside watch_feed");
+    return;
+  }
+
+  const siblings = uselessParent.children;
+
+  if (!siblings || siblings.length < 2) {
+    console.log("Not enough siblings to hide recommendations");
+  }
+
+  const recommendationsContainer = siblings[siblings.length - 1];
+  if (
+    !recommendationsContainer ||
+    !(recommendationsContainer instanceof Element)
+  ) {
+    console.log("No recommendationsContainer found");
+    return;
+  }
+
+  recommendationsContainer.style.display = "none";
+  console.log("Video recommendations hidden on /watch route");
+};
+
 const hideReelsDebounced = debounce(() => {
   try {
     hideReels();
@@ -221,6 +266,14 @@ const limitFeedSizeDebounced = debounce(() => {
     limitFeedSize();
   } catch (e) {
     console.error("limitFeedSize error", e);
+  }
+}, 120);
+
+const hideVideoRecommendationsDebounced = debounce(() => {
+  try {
+    hideVideoRecommendations();
+  } catch (e) {
+    console.error("hideVideoRecommendations error", e);
   }
 }, 120);
 
@@ -241,6 +294,7 @@ const observer = new MutationObserver((mutations) => {
     if (m.addedNodes && m.addedNodes.length > 0) {
       hideReelsDebounced();
       limitFeedSizeDebounced();
+      hideVideoRecommendationsDebounced();
       break;
     }
   }
