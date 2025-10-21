@@ -307,3 +307,109 @@ if (observeTarget) {
 }
 
 // Optional: to stop observing later call observer.disconnect();
+
+// -------------------------
+// Route watcher to block infinite reel navigation
+// -------------------------
+(() => {
+  // Keep track of the last seen reel id while on a /reel/ route.
+  let lastReelId = null;
+  let lastPath = window.location && window.location.pathname;
+
+  const getReelIdFromPath = (path) => {
+    if (!path) return null;
+    // Matches /reel or /reel/ or /reel/<id> and captures <id>
+    const m = path.match(/^\/reel(?:\/(.*))?$/);
+    if (!m) return null;
+    return m[1] || "__reel_root__"; // treat /reel and /reel/<id>
+  };
+
+  const onLocationChange = () => {
+    try {
+      const path = window.location && window.location.pathname;
+      if (path === lastPath) return;
+      lastPath = path;
+
+      const reelId = getReelIdFromPath(path);
+      if (!reelId) {
+        // left reel area - reset tracking
+        lastReelId = null;
+        return;
+      }
+
+      // now on a reel route
+      if (lastReelId === null) {
+        // first reel visit - remember it and allow
+        lastReelId = reelId;
+        console.log("routeWatcher: first reel seen", reelId);
+        return;
+      }
+
+      if (reelId !== lastReelId) {
+        // user navigated to a different reel -> kick them back to root
+        console.log(
+          "routeWatcher: reel changed",
+          lastReelId,
+          "->",
+          reelId,
+          "redirecting to /"
+        );
+
+        // Use replaceState to avoid leaving the reel in history, then dispatch a locationchange
+        try {
+          window.location.href = "/";
+        } catch (e) {
+          console.error("routeWatcher: error forcing root navigation", e);
+          // fallback
+          window.location.href = "/";
+        }
+        // Reset tracking after redirect
+        lastReelId = null;
+      }
+    } catch (e) {
+      console.error("routeWatcher error", e);
+    }
+  };
+
+  // Wrap history methods so we can detect SPA navigations
+  (function () {
+    const _wr = (type) => {
+      const orig = history[type];
+      return function () {
+        const rv = orig.apply(this, arguments);
+        try {
+          window.dispatchEvent(new Event("locationchange"));
+        } catch (e) {
+          console.error("routeWatcher: failed to dispatch locationchange", e);
+        }
+        return rv;
+      };
+    };
+    history.pushState = _wr("pushState");
+    history.replaceState = _wr("replaceState");
+  })();
+
+  // Listen for popstate/locationchange
+  window.addEventListener("popstate", onLocationChange);
+  window.addEventListener("locationchange", onLocationChange);
+
+  // Periodic fallback in case other navigation methods are used
+  const interval = setInterval(() => {
+    try {
+      const path = window.location && window.location.pathname;
+      if (path !== lastPath) onLocationChange();
+    } catch (e) {
+      console.error("routeWatcher interval error", e);
+    }
+  }, 250);
+
+  // Stop the interval if the page is being unloaded
+  window.addEventListener("beforeunload", () => clearInterval(interval));
+
+  // Run once to initialize state
+  try {
+    onLocationChange();
+  } catch (e) {
+    console.error("routeWatcher init error", e);
+  }
+})();
