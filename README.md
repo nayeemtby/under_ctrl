@@ -1,21 +1,13 @@
-# My Chrome Extension
+# Under Ctrl
 
-This is a simple Chrome extension that demonstrates the use of background scripts, content scripts, and a popup interface.
+Simple chrome extension to limit facebook activities
 
-## Project Structure
+## What it does
+* Removes the watch feed from the watch route
+* Limits news feed to ~15 posts (Works only for english language)
+* Hides reel suggestion from the news feed
+* Redirects back to news feed if tries to watch more than one reel in the reel route
 
-```
-my-chrome-extension
-├── src
-│   ├── background.js        # Background script for handling events and managing the extension's lifecycle
-│   ├── content.js          # Content script for interacting with web pages
-│   ├── popup
-│   │   ├── popup.html      # HTML structure for the popup
-│   │   ├── popup.js        # JavaScript for handling popup interactions
-│   │   └── popup.css       # Styles for the popup
-├── manifest.json           # Configuration file for the Chrome extension
-└── README.md               # Documentation for the project
-```
 
 ## Installation
 
@@ -26,10 +18,8 @@ my-chrome-extension
 
 ## Usage
 
-- Click on the extension icon in the Chrome toolbar to open the popup.
-- The background script will manage the extension's lifecycle and handle any events.
-- The content script will interact with the web pages based on the defined logic.
+- Just enable the extension
 
 ## Contributing
 
-Feel free to submit issues or pull requests for improvements or bug fixes.
+* Not taking any contributions at this time
